@@ -16,6 +16,11 @@ void dawdle();
 
 int main(int argc, char* argv[]) {
 
+    print_the_top();
+
+    //initialize the semaphore for printing
+    sem_init(&printing_semaphore, 0, 1);
+
     //if the user provided the additional optional argument
     //make the string argument back into an int and assign it to the global
     if (argc > 1) {
@@ -37,7 +42,8 @@ int main(int argc, char* argv[]) {
 
     for (i = 0; i < NUM_PHILOSOPHERS; i++) {
         phil_id[i] = i;
-        int status = pthread_create(&philosophers[i], NULL, philosopher, (void*)&phil_id[i]);
+        int status = pthread_create(&philosophers[i], 
+                     NULL, philosopher, (void*)&phil_id[i]);
 
         if (status == -1){
             fprintf(stderr, "philosopher %i: %s\n", i, strerror(status));
@@ -53,14 +59,14 @@ int main(int argc, char* argv[]) {
     //cleanup semaphores when done
     clean_forks(); 
 
-    print_whole_thing();
+    print_the_bottom();
 
     return 0;
 }
 
 void* philosopher(void* phil_id) {
 
-    //!why is phil_id cast to void* and then cast back to int and deref? do not understand 
+    //!why is phil_id cast to void* then cast back to int and deref?
 
     //the id is the id identifying each philosopher. ex: philosopher 1
     int id = *(int *)phil_id;
@@ -104,18 +110,24 @@ void* philosopher(void* phil_id) {
 
         //if philosopher has both forks, they will eat
         //EATING:
-        philosopher_state[i] = 'E';
+        philosopher_state[id] = 'E';
+        //printf("CURRENT PHILOSOPHER WHO'S STATE IS BEING CHANGED: %d\n", id);
+        //! is this supposed to be printed here? 
+        print_the_middle();
         //printf("forks picked up for philosopher %d. NOW EATING\n", id);
         dawdle();
 
         //if philosopher has eaten, then they will think
         //to think, they have to put down both forks first
         //THINKING:
-        //printf("philosopher %d puts down left fork\n", id);
+       //printf("philosopher %d puts down left fork\n", id);
         sem_post(&forks[left_fork]);
         //printf("philosopher %d puts down right fork\n", id);
         sem_post(&forks[right_fork]);
-        philosopher_state[i] = 'T';
+        philosopher_state[id] = 'T';
+        //printf("CURRENT PHILOSOPHER WHO'S STATE IS BEING CHANGED: %d\n", id);
+        //! is this supposed to be printed here?
+        print_the_middle();
         //printf("forks returned for philosopher %d. NOW THINKING\n", id);
         dawdle();
     }

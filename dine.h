@@ -21,3 +21,5 @@ sem_t forks[NUM_PHILOSOPHERS];
 pthread_t philosophers[NUM_PHILOSOPHERS];
 int phil_id[NUM_PHILOSOPHERS];
 char philosopher_state[NUM_PHILOSOPHERS];
+
+sem_t printing_semaphore;

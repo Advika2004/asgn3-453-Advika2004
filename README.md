@@ -1,8 +1,10 @@
-Advika Deodhar
+Name: Advika Deodhar
+Special Instructions While Grading: N/A
+Other Notes: What is Mexico's favourite operating system?
+                            TacOS :)
 
 ______________________________________________________________________________________
-Pseudocode To Begin: 
-
+Pseudocode and Other Notes I Took Throughout: 
 
 Overall Task:
 - Philosophers have to eat, think, and get full / hungry
@@ -23,14 +25,11 @@ Steps:
 - Function to print stuff
 
 Dine File:
-
 - Create Forks:
     - for as many philosophers there are, create one fork for each of them
     - num philosophers = num forks because it is a circle even though each person uses two forks
-
 - Clean Forks:
     - at the end need to destroy the semaphores just as I created them
-
 - Main: 
     - if the user provided the extra argument then update the cycles
     - create all the forks needed
@@ -38,24 +37,18 @@ Dine File:
         - the philosophers will automatically run the philosopher function when created
     - wait for all the threads
     - clean up the forks
-
 - Philosopher:
     - this is where the philosopher actually picks up the forks, waits, thinks, and eats. 
 
 Printing File: 
-
 - print_border:
     -  prints out the top middle and bottom borders
-
 - print_label: 
     - print the letters for each label 
-
 - print_status:
     - prints if it is EAT, THINK or nun
-
 - print_forks:
     - will print the forks held by each philosopher
-
 - print_table:
     - first will create the semaphore lock so that only one thread prints at a time
     - will print_border for the top
@@ -66,8 +59,6 @@ Printing File:
     - will print_border to end the table
     - post to the semaphore
 
-
-
 ERROR CHECKS: 
  - Check liteally all pthreads
  - Check all semaphore creation, and all actions for that in general 
@@ -75,9 +66,6 @@ ERROR CHECKS:
  TODO: 
 - make sure that I am printing in the right spots
 - need a way to keep track of which philosopher is eating and when 
-- make a struct that says if the philosopher has picked up a fork or not
+- make a struct?? that says if the philosopher has picked up a fork or not
 - then when i pick them up, update that part of the struct
 - then in the printing, just check if the philosopher has picked up that fork or not
-
-
-- the philosopher will have one 

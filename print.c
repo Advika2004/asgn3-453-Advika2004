@@ -1,9 +1,12 @@
 #include "dine.h"
+#include "print.h"
 
-#define COLLUMN_WIDTH 8
+//what the labels should start at
 char label_start = 'A';
 
+//will print the top and bottom and middle border
 void print_borders(){
+
     //for the outer loop so that it can print enough |
     int i;
 
@@ -28,46 +31,64 @@ void print_borders(){
 }
 
 void print_label() {  
-    int i, j;
+    int i; 
+    int j;
 
     int total = COLLUMN_WIDTH + NUM_PHILOSOPHERS;
 
+    //make sure if its even that it lines up properly
     if (total % 2 == 0){
         total += 1;
     }
 
+    //make sure the letter will be centered
     int left_padding = ((total) / 2);
     int right_padding = ((total) - 1) / 2;
 
     for (i = 0; i < NUM_PHILOSOPHERS; i++) {
         printf("|");
+
         for (j = 0; j < left_padding; j++) {
             printf(" ");
         }
+
         printf("%c", label_start);
+
+        //go to the next ascii 
         label_start += 1;
+
         for (j = 0; j < right_padding; j++) {
             printf(" ");
         }
     }
+
     printf("|\n");
 }
 
 
 void print_forks_and_status() {
-    int philo, fork, fork_value;
 
-    // Loop through each philosopher to print forks and status together
-    for (philo = 0; philo < NUM_PHILOSOPHERS; philo++) {
+    int phil;
+    int fork;
+    int fork_value;
+
+    //for every  philosopher
+    for (phil = 0; phil < NUM_PHILOSOPHERS; phil++) {
 
         printf("| ");
 
+        //then go through every fork for each philosopher
         for (fork = 0; fork < NUM_PHILOSOPHERS; fork++){
 
-            sem_getvalue(&forks[fork], &fork_value);
+            //check if the fork is being used or not
+            int result1 = sem_getvalue(&forks[fork], &fork_value);
+            if (result1 != 0) {
+                errno = result1;
+                perror("failed to get fork value");
+            }
 
             //if the left fork is being used, print the left fork
-            if ((who_got_da_fork[fork] == philo) && fork_value == 0) {
+            if ((who_got_da_fork[fork] == phil) && fork_value == 0) {
                 printf("%d", fork);
             } 
             else {
@@ -76,20 +97,20 @@ void print_forks_and_status() {
             
         }
         
-
         //print space between forks and status
         printf(" ");
 
-        int left_fork = philo;
-        int right_fork = (philo + 1) % NUM_PHILOSOPHERS;
+        //define the left and the right
+        int left_fork = phil;
+        int right_fork = (phil + 1) % NUM_PHILOSOPHERS;
 
         //now move to printing the state
-        if ((philosopher_state[philo] == 'E') 
-            && (who_got_da_fork[left_fork] == philo) &&
-            (who_got_da_fork[right_fork] == philo)) {
+        if ((philosopher_state[phil] == 'E') 
+            && (who_got_da_fork[left_fork] == phil) &&
+            (who_got_da_fork[right_fork] == phil)) {
             printf("Eat   ");
         }
-        else if ((philosopher_state[philo] == 'T') 
+        else if ((philosopher_state[phil] == 'T') 
             && (who_got_da_fork[left_fork] == -1) &&
             (who_got_da_fork[right_fork] == -1)) {
             printf("Think ");
@@ -107,30 +128,32 @@ void print_forks_and_status() {
     printf("|\n");
 }
 
-
+//prints the juicy meat
 void print_the_middle() {
-    int error = sem_wait(&printing_semaphore);
-    if (error == -1) {
-        perror("sem_wait error\n");
+    int result2 = sem_wait(&printing_semaphore);
+    if (result2 != 0) {
+        perror("failed to wait for printing semaphore\n");
         exit(EXIT_FAILURE);
     }
 
-    // Print the forks and state of each philosopher
+    //print the forks and state of each philosopher
     print_forks_and_status();
 
-    error = sem_post(&printing_semaphore);
-    if (error == -1) {
-        perror("sem_post\n");
+    result2 = sem_post(&printing_semaphore);
+    if (result2 != 0) {
+        perror("failt to post printing semaphore\n");
         exit(EXIT_FAILURE);
     }
 }
 
+//print the top of the chart
 void print_the_top() {
     print_borders();
     print_label();
     print_borders();
 }
 
+//print the bottom of the chart
 void print_the_bottom() {
     print_borders();
 }

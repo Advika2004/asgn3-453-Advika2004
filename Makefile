@@ -16,14 +16,14 @@ dine.o: dine.c dine.h print.h
 print.o: print.c print.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# run domma
+# run dine
 run: dine
 	./dine
 
-# Clean up generated files
+# clean it all up
 clean:
 	rm -rf *.o dine
 
-# Debug with gdb
+# for if i need gdb
 gdb: dine
 	gdb ./dine

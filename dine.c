@@ -2,23 +2,19 @@
 #include "print.h"
 
 
-//! need to take care of the condition 
-//! if if there is only one philosopher because that is hanging 
-
-
-//function prototypes
-void* philosopher(void* phil_id);
-void create_forks();
-void clean_forks();
-void dawdle();
-
+//global variable
 int num_cycles = 1;
+
 
 //function will create as many semaphores as there are philosophers
 void create_forks() {
     int i;
     for (i = 0; i < NUM_PHILOSOPHERS; i++) {
-        sem_init(&forks[i], 0, 1);
+        int result1 = sem_init(&forks[i], 0, 1);
+        if (result1 != 0) {
+            errno = result1;
+            perror("failed to initialize forks");
+        }
     }
 }
 
@@ -26,7 +22,11 @@ void create_forks() {
 void clean_forks() {
     int i;
     for (i = 0; i < NUM_PHILOSOPHERS; i++) {
-        sem_destroy(&forks[i]);
+        int result2 = sem_destroy(&forks[i]);
+        if (result2 != 0) {
+            errno = result2;
+            perror("failed to destroy forks");
+        }
     }
 }
 
@@ -43,135 +43,140 @@ void dawdle() {
 
 //picks them up 
 void pickup_forks(int id, int left_fork, int right_fork) {
+
+    //start off with all philosophers changing
     philosopher_state[id] = 'C';  
     print_the_middle();  
 
+    //if it is even do right first then left
+    //update which philosopher is holding the forks
     if (id % 2 == 0) {
 
-        //!printing here
-        //printf("philosopher %d tries to pick up right fork\n", id);
+        int result3 = sem_wait(&forks[right_fork]);
+        if (result3 != 0) {
+            errno = result3;
+            perror("failed to pick up right fork");
+        }
 
-        sem_wait(&forks[right_fork]);
         who_got_da_fork[right_fork] = id;
 
-        //!printing here
-        //printf("philosopher %d picked up right fork\n", id);
+        int result4 = sem_wait(&forks[left_fork]);
+        if (result4 != 0) {
+            errno = result4;
+            perror("failed to pick up left fork");
+        }
 
-        //!printing here
-        //printf("philosopher %d tries to pick up left fork\n", id);
-
-        sem_wait(&forks[left_fork]);
         who_got_da_fork[left_fork] = id;
 
-        //!printing here
-        //printf("philosopher %d picked up left fork\n", id);
+    } 
+    
+    //else do the opposite 
+    //update which philosopher is holding the forks
+    else {
 
-    } else {
-        //!printing
-        //printf("philosopher %d tries to pick up left fork\n", id);
+        int result5 = sem_wait(&forks[left_fork]);
+        if (result5 != 0) {
+            errno = result5;
+            perror("failed to pick up left fork");
+        }
 
-        sem_wait(&forks[left_fork]);
         who_got_da_fork[left_fork] = id;
 
-        //!printing here
-        //printf("philosopher %d picked up left fork\n", id);
 
-        //!printing
-        //printf("philosopher %d tries to pick up right fork\n", id);
+        int result6 = sem_wait(&forks[right_fork]);
+        if (result6 != 0) {
+            errno = result6;
+            perror("failed to pick up right fork");
+        }
 
-        sem_wait(&forks[right_fork]);
         who_got_da_fork[right_fork] = id;
-
-
-
-        
-        //!printing here
-        //printf("philosopher %d picked up right fork\n", id);
 
     }
 
-    philosopher_state[id] = 'E';  // State to Eating after picking up forks
-    print_the_middle();  // Print after picking up forks
+    //after picking both up, goes into EAT state
+    philosopher_state[id] = 'E';  
+    print_the_middle();
 }
 
+//puts em down
 void putdown_forks(int id, int left_fork, int right_fork) {
-    philosopher_state[id] = 'C';  // State is Changing before putting down
-    print_the_middle();  // Print the changing state
+
+    //make it in the CHANGE state before it goes to THINK
+    philosopher_state[id] = 'C'; 
+    print_the_middle();
 
 
+    //if it is even do right then left
+    //update who got da fork by saying no one has that fork anymore
     if (id % 2 == 0) {
         who_got_da_fork[right_fork] = -1;
-        sem_post(&forks[right_fork]);
-
-        //!printing
-        //printf("philosopher %d puts down right fork\n", id);
-
-        who_got_da_fork[right_fork] = -1;
-        sem_post(&forks[left_fork]);
-
-        //!printing
-        //printf("philosopher %d puts down left fork\n", id);
-
-    } else {
-        who_got_da_fork[right_fork] = -1;
-        sem_post(&forks[left_fork]);
-
-        //!printing
-        //printf("philosopher %d puts down left fork\n", id);
+        int result7 = sem_post(&forks[right_fork]);
+        if (result7 != 0) {
+            errno = result7;
+            perror("failed to put down right fork");
+        }
 
         who_got_da_fork[right_fork] = -1;
-        sem_post(&forks[right_fork]);
+        int result8 = sem_post(&forks[left_fork]);
+        if (result8 != 0) {
+            errno = result8;
+            perror("failed to put down left fork");
+        }
 
-        //!printing
-        //printf("philosopher %d puts down right fork\n", id);
+    } 
+
+    //else do opposite 
+    else {
+        who_got_da_fork[right_fork] = -1;
+        int result9 = sem_post(&forks[left_fork]);
+        if (result9 != 0) {
+            errno = result9;
+            perror("failed to put down left fork");
+        }
+
+        who_got_da_fork[right_fork] = -1;
+        int result10 = sem_post(&forks[right_fork]);
+        if (result10 != 0) {
+            errno = result10;
+            perror("failed to put down right fork");
+        }
     }
 
-    philosopher_state[id] = 'T';  // State to Thinking after putting down forks
-    print_the_middle();  // Print after putting down forks
-
+    //after both have been put down, goes to THINKING
+    philosopher_state[id] = 'T'; 
+    print_the_middle();
 }
 
-//eats
+//eats and calls random time
 void eat() {
-
-    //!printing here
-    //printf("forks picked up for philosopher. NOW EATING\n");
-
     dawdle();
 }
 
-//thinks
+//thinks and calls random time
 void think() {
-
-    //!printing here
-    //printf("forks put down by philosopher. NOW THINKING\n");
-
     dawdle();
 }
 
-//calls all of that in right order
+//calls all of that in right order so each philosopher can eat wait and think
 void* philosopher(void* phil_id) {
     int id = *(int *)phil_id;
-
-    //!printing here
-    //printf("philosopher %d wants to eat\n", id);
-
     int left_fork = id;
     int right_fork = (id + 1) % NUM_PHILOSOPHERS;
     int i;
 
+    //for as many number of cycles were told
     for (i = 0; i < num_cycles; i++) {
 
-        // Pickup forks
+        //pick up the forks
         pickup_forks(id, left_fork, right_fork);
 
-        // Eat
+        //then eat
         eat();
 
-        // Put down forks
+        //put down the forks
         putdown_forks(id, left_fork, right_fork);
 
-        // Think
+        //then think
         think();
 
     }
@@ -182,10 +187,15 @@ void* philosopher(void* phil_id) {
 
 int main(int argc, char* argv[]) {
 
+    //print top of the table
     print_the_top();
 
     //initialize the semaphore for printing
-    sem_init(&printing_semaphore, 0, 1);
+    int result11 = sem_init(&printing_semaphore, 0, 1);
+    if (result11 != 0) {
+        errno = result11;
+        perror("failed to initialize printing fork");
+    }
 
     //if the user provided the additional optional argument
     //make the string argument back into an int and assign it to the global
@@ -205,21 +215,25 @@ int main(int argc, char* argv[]) {
 
     //create an ID for each philosopher
     //also create the philosophers
-
     for (i = 0; i < NUM_PHILOSOPHERS; i++) {
         phil_id[i] = i;
         int status = pthread_create(&philosophers[i], 
                      NULL, philosopher, (void*)&phil_id[i]);
 
-        if (status == -1){
-            fprintf(stderr, "philosopher %i: %s\n", i, strerror(status));
-            exit(-1);
+        if (status != 0) {
+            errno = status;
+            perror("error creating philosopher thread");
+            exit(EXIT_FAILURE);
         }
     }
 
-    // wait for the threads
+    //wait for the threads
     for (i = 0; i < NUM_PHILOSOPHERS; i++) {
-        pthread_join(philosophers[i], NULL);
+        int result12 = pthread_join(philosophers[i], NULL);
+        if (result12 != 0) {
+            errno = result12;
+            perror("failed to join philosopher thread");
+        }
     }
 
     //cleanup semaphores when done
@@ -229,135 +243,3 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
-
-
-
-
-
-
-// void* philosopher(void* phil_id) {
-
-//     int id = *(int *)phil_id;
-    
-//     int left_fork = id;
-
-//     int right_fork = (id + 1) % NUM_PHILOSOPHERS;
-
-//     int i;
-//     for (i = 0; i < num_cycles; i++) {
-
-//     philosopher_state[id] = 'C';
-
-//         if (id % 2 == 0) {
-
-//             sem_wait(&forks[right_fork]);
-            
-//             sem_wait(&forks[left_fork]);
-        
-//         }
-
-//         else {
-//             sem_wait(&forks[left_fork]);
-
-//             sem_wait(&forks[right_fork]);
-//         }
-
-//         //EATING:
-//         philosopher_state[id] = 'E';
-
-//         print_the_middle();
-
-//         dawdle();
-
-
-//         //THINKING:
-
-//         sem_post(&forks[left_fork]);
-//         sem_post(&forks[right_fork]);
-//         philosopher_state[id] = 'T';
-
-//         print_the_middle();
-
-//         dawdle();
-//     }
-
-//     return NULL;
-// }
-
-// void* philosopher(void* phil_id) {
-
-
-//     //!why is phil_id cast to void* then cast back to int and deref?
-
-//     //the id is the id identifying each philosopher. ex: philosopher 1
-//     int id = *(int *)phil_id;
-    
-//     //printf("philosopher %d wants to eat\n", id);
-
-//     //its left fork will be fork 1
-//     int left_fork = id;
-
-//     //its right fork will be 2
-//     //need modulo its a circle the last philosophers right becomes the first
-//     int right_fork = (id + 1) % NUM_PHILOSOPHERS;
-
-//     //need to loop through the number of eat think wait cycles the user want
-//     int i;
-//     for (i = 0; i < num_cycles; i++) {
-
-//         //upon start the philospher is in the changing state
-//     philosopher_state[id] = 'C';
-
-//         //have each philosopher pick up the fork
-//         //if the philosopher has an even id, pick up the right first then 
-//         //then switch for odd to avoid deadlock 
-//         if (id % 2 == 0) {
-//             //printf("philosopher %d tries to pick up right fork\n", id);
-//             sem_wait(&forks[right_fork]);
-//             //printf("philosopher %d picked up right fork\n", id);
-
-//             //printf("philosopher %d tries to pick up left fork\n", id);
-//             sem_wait(&forks[left_fork]);
-//             //printf("philosopher %d picked up left fork\n", id);
-//         }
-
-//         //odd does the opposite
-//         else {
-//             //printf("philosopher %d tries to pick up left fork\n", id);
-//             sem_wait(&forks[left_fork]);
-//             //printf("philosopher %d picked up left fork\n", id);
-
-//             //printf("philosopher %d tries to pick up right fork\n", id);
-//             sem_wait(&forks[right_fork]);
-//             //printf("philosopher %d picked up right fork\n", id);
-//         }
-
-//         //if philosopher has both forks, they will eat
-//         //EATING:
-//         philosopher_state[id] = 'E';
-//         //printf("CURRENT PHILOSOPHER WHO'S STATE IS BEING CHANGED: %d\n", i
-//         //! is this supposed to be printed here? 
-//         print_the_middle();
-//         //printf("forks picked up for philosopher %d. NOW EATING\n", id);
-//         dawdle();
-
-//         //if philosopher has eaten, then they will think
-//         //to think, they have to put down both forks first
-//         //THINKING:
-//        //printf("philosopher %d puts down left fork\n", id);
-//         sem_post(&forks[left_fork]);
-//         //printf("philosopher %d puts down right fork\n", id);
-//         sem_post(&forks[right_fork]);
-//         philosopher_state[id] = 'T';
-//         //printf("CURRENT PHILOSOPHER WHO'S STATE IS BEING CHANGED: %d\n", i
-//         //! is this supposed to be printed here?
-//         print_the_middle();
-//         //printf("forks returned for philosopher %d. NOW THINKING\n", id);
-//         dawdle();
-//     }
-
-//     return NULL;
-// }
-
-
-

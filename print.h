@@ -6,4 +6,6 @@ void print_forks_and_status();
 void print_label();
 void print_borders();
 
+#define COLLUMN_WIDTH 8
+
 

@@ -71,3 +71,13 @@ Printing File:
 ERROR CHECKS: 
  - Check liteally all pthreads
  - Check all semaphore creation, and all actions for that in general 
+
+ TODO: 
+- make sure that I am printing in the right spots
+- need a way to keep track of which philosopher is eating and when 
+- make a struct that says if the philosopher has picked up a fork or not
+- then when i pick them up, update that part of the struct
+- then in the printing, just check if the philosopher has picked up that fork or not
+
+
+- the philosopher will have one 
